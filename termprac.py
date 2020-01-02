@@ -1,4 +1,5 @@
 from prompt_toolkit.application import Application
+from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import Float, HSplit, VSplit
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.layout.layout import Layout
@@ -21,15 +22,50 @@ from prompt_toolkit.lexers import PygmentsLexer
 
 import os
 from git import Repo
+from pydriller import RepositoryMining
 
 print(os.path.dirname(os.path.realpath(__file__)))
 repo = Repo(os.path.dirname(os.path.realpath(__file__)))
-import pdb;pdb.set_trace()
 
+
+def get_untracked_files():
+    return repo.untracked_files
 
 textfield = TextArea(lexer=PygmentsLexer(HtmlLexer))
+
+checkboxes = []
+for item in get_untracked_files():
+    checkboxes.append(Checkbox(text=item))
+
 checkbox1 = Checkbox(text="Checkbox")
 checkbox2 = Checkbox(text="Checkbox")
+
+# commits_list = list(repo.iter_commits())
+# print(f"First commit: {commits_list[0]}")
+
+# changed_files = []
+# changed_text = []
+ 
+# for x in commits_list[0].diff(commits_list[-1]):
+#     if x.a_blob.path not in changed_files:
+#         changed_files.append(x.a_blob.path)
+#         changed_text.append(x.a_blob.data_stream)
+        
+#     if x.b_blob is not None and x.b_blob.path not in changed_files:
+#         changed_files.append(x.b_blob.path)
+#         changed_text.append(x.b_blob.data_stream)
+        
+# print(changed_files)
+# print(changed_files)
+
+for item in repo.index.diff(None):
+    import pdb;pdb.set_trace()
+    print(item.a_path)
+
+for commit in RepositoryMining(os.path.dirname(os.path.realpath(__file__)), only_in_branch=repo.active_branch.name).traverse_commits():
+    for modified_file in commit.modifications:
+        modfile = modified_file.filename
+        # print(modified_file.diff)
 
 def repobranchestolist(listobj):
     repoList = []
@@ -78,11 +114,12 @@ nodeWindowSize=53
 podListAreaFrame = Frame(podListArea,title="Pods",width=podListWindowSize)
 
 #content windows
-namespaceWindow = HSplit([checkbox1, checkbox2,])
-namespaceWindowFrame= Frame(namespaceWindow,title="Namespaces",height=8,width=namespaceWindowSize)
+# namespaceWindow = HSplit([checkbox1, checkbox2,])
+namespaceWindow = HSplit(checkboxes)
+namespaceWindowFrame= Frame(namespaceWindow,title="Namespaces",height=8)#,width=namespaceWindowSize)
 
 nodeListArea = radios
-nodeWindowFrame= Frame(nodeListArea,title="Nodes",height=8,width=nodeWindowSize)
+nodeWindowFrame= Frame(nodeListArea,title="Nodes",height=8)#,width=nodeWindowSize)
 
 
 
@@ -118,7 +155,7 @@ upper_left_container = HSplit([namespaceWindowFrame,
 left_container = HSplit([upper_left_container,
                 #HorizontalLine(),
                 #Window(height=1, char='-'),
-                podListAreaFrame])
+                podListAreaFrame],padding=1)
 
 right_container = HSplit([outputAreaFrame,
     output2AreaFrame])
@@ -143,6 +180,8 @@ content_container = VSplit([
 
 # 2. Key bindings
 kb = KeyBindings()
+kb.add("tab")(focus_next)
+kb.add("s-tab")(focus_previous)
 @kb.add("q")
 def _(event):
     " Quit application. "
