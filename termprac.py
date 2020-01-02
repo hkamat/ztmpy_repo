@@ -27,7 +27,6 @@ from pydriller import RepositoryMining
 print(os.path.dirname(os.path.realpath(__file__)))
 repo = Repo(os.path.dirname(os.path.realpath(__file__)))
 
-
 def get_untracked_files():
     return repo.untracked_files
 
